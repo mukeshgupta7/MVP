@@ -1,0 +1,4 @@
+crop,season,sowing_start,sowing_end,duration_days
+Wheat,Rabi,2025-11-01,2025-12-15,120
+Rice,Kharif,2025-06-15,2025-07-15,135
+Soybean,Kharif,2025-06-15,2025-07-15,110
