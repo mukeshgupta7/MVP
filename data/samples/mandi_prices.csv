@@ -1,0 +1,4 @@
+id,commodity,district,date,modal_price,unit
+1,Wheat,Pune,2025-08-01,2300,INR/quintal
+2,Rice,Pune,2025-08-01,2800,INR/quintal
+3,Soybean,Indore,2025-08-01,4500,INR/quintal
