@@ -7,7 +7,7 @@ setup:
 	$(PIP) install --user -r requirements.txt --no-warn-script-location || $(PIP) install -r requirements.txt --break-system-packages --no-warn-script-location
 
 run-api:
-	$(PYTHON) -m uvicorn agri_advisor.server:app --host 0.0.0.0 --port 8000 --reload
+	$(PYTHON) -m uvicorn agri_advisor.server:app --host 0.0.0.0 --port 8000
 
 ask:
 	$(PYTHON) -m agri_advisor.cli --q "$(q)" --district "$(district)" --crop "$(crop)" --lang "$(lang)"
