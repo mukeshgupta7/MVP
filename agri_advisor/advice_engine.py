@@ -7,6 +7,7 @@ import langid
 from .retriever import LocalRetriever
 from .rules import when_to_irrigate, parse_weather, parse_soil
 from .config import INDEX_DIR
+from . import external
 
 @dataclass
 class AdvisorResult:
@@ -36,9 +37,37 @@ class AgriAdvisor:
 
         lower_q = question.lower()
         if "irrigate" in lower_q or "सिंचाई" in lower_q:
-            w = parse_weather(self.data_dir / "weather_sample.csv", district)
+            # Try public APIs first
+            weather_rows = None
+            if district:
+                try:
+                    # geocode and fetch open-meteo daily forecast
+                    # We run async functions via httpx.run wrappers
+                    loc = external.geocode_district(district)
+                    if loc:
+                        lat, lon = loc
+                        daily = external.fetch_open_meteo(lat, lon)
+                        if daily:
+                            # Convert to rules-compatible rows using most recent 3 days (or next 3 days?)
+                            # For irrigation, use past days would be ideal, but Open-Meteo daily returns forecast.
+                            # We will use first 3 entries as near-term outlook.
+                            from datetime import datetime
+                            parsed = []
+                            for row in daily[:3]:
+                                parsed.append({
+                                    "date": datetime.fromisoformat(row["date"]),
+                                    "rain_mm": row.get("rain_mm", 0.0) or 0.0,
+                                    "tmax_c": row.get("tmax_c"),
+                                })
+                            weather_rows = parsed
+                            citations.append({"source": "Open-Meteo", "dataset": "weather_forecast", "url": "https://api.open-meteo.com/"})
+                            citations.append({"source": "Nominatim OSM", "dataset": "geocoding", "url": "https://nominatim.org/"})
+                except Exception:
+                    weather_rows = None
+            if not weather_rows:
+                weather_rows = parse_weather(self.data_dir / "weather_sample.csv", district)
             s = parse_soil(self.data_dir / "soil_types.csv", district)
-            rule = when_to_irrigate(w, s)
+            rule = when_to_irrigate(weather_rows or [], s)
             answer = reasons_to_answer(rule.messages)
             conf = rule.confidence
             reasons.extend(rule.messages)
